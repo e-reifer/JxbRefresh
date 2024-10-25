@@ -8,33 +8,9 @@
 
 import Foundation
 import UIKit
-// FIXME: comparison operators with optionals were removed from the Swift Standard Libary.
-// Consider refactoring the code to use the non-optional operators.
-fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
-  switch (lhs, rhs) {
-  case let (l?, r?):
-    return l < r
-  case (nil, _?):
-    return true
-  default:
-    return false
-  }
-}
 
-// FIXME: comparison operators with optionals were removed from the Swift Standard Libary.
-// Consider refactoring the code to use the non-optional operators.
-fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
-  switch (lhs, rhs) {
-  case let (l?, r?):
-    return l > r
-  default:
-    return rhs < lhs
-  }
-}
-
-
-func afterTime(_ delay: Double) -> DispatchTime {
-    return DispatchTime.now() + Double(Int64(delay * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC)
+func afterTime(delay: Double) -> DispatchTime {
+    return dispatch_time(DISPATCH_TIME_NOW,Int64(delay * Double(NSEC_PER_SEC)))
 }
 
 
@@ -53,9 +29,9 @@ extension UIScrollView {
      
      - parameter closure: 执行闭包 / the function of closure
      */
-    public func addPullRefresh(_ closure: @escaping JxbRefreshClosure) -> Void {
+    public func addPullRefresh(closure: JxbRefreshClosure) -> Void {
         self.layoutIfNeeded()
-        self.jxbHeader = JxbRefreshHeader.init(frame: CGRect(x: 0, y: -offset_heaer_y, width: self.frame.width, height: offset_heaer_y))
+        self.jxbHeader = JxbRefreshHeader.init(frame: CGRect(x: 0, -offset_heaer_y, self.frame.width, offset_heaer_y))
         self.jxbHeader?.backgroundColor = self.backgroundColor
         self.jxbHeader!.jxbClosure = closure
         self.addSubview(self.jxbHeader!)
@@ -69,9 +45,9 @@ extension UIScrollView {
      - parameter refreshImages: 刷新过程图片组 / the images when refreshing
      - parameter closure:       执行闭包 / the function of closure
      */
-    public func addGifPullRefresh(idleImages: NSArray, refreshImages: NSArray, closure: @escaping JxbRefreshClosure) -> Void {
+    public func addGifPullRefresh(idleImages: NSArray, refreshImages: NSArray, closure: JxbRefreshClosure) -> Void {
         self.layoutIfNeeded()
-        self.jxbGifHeader = JxbRefreshGifHeader.init(frame: CGRect(x: 0, y: -offset_heaer_y, width: self.frame.width, height: offset_heaer_y))
+        self.jxbGifHeader = JxbRefreshGifHeader.init(frame: CGRect(x: 0, -offset_heaer_y, self.frame.width, offset_heaer_y))
         self.jxbGifHeader!.backgroundColor = self.backgroundColor
         self.jxbGifHeader!.jxbClosure = closure
         self.jxbGifHeader!.images_idle = (idleImages as! [UIImage])
@@ -86,7 +62,7 @@ extension UIScrollView {
     public func triggerPullToRefresh() {
         let baseHeader: JxbRefreshBaseHeader? = self.p_getCurrentHeader()
         if baseHeader != nil {
-            baseHeader?.state = .willRefresh
+            baseHeader?.state = .WillRefresh
             self.p_adjustRefresh(baseHeader!)
   
         }
@@ -96,10 +72,10 @@ extension UIScrollView {
      上拉刷新函数 / the function of pull next page action
      - parameter closure: 执行闭包 / the function of closure
      */
-    public func addFooterRefresh(closure:@escaping JxbRefreshClosure) ->Void {
+    public func addFooterRefresh(closure closure:JxbRefreshClosure) ->Void {
         self.layoutIfNeeded()
         self.footerEnable = true
-        self.jxbFooter = JxbNextRefreshFooter.init(frame: CGRect(x: 0, y: 0, width: self.frame.width, height: offset_footer_y))
+        self.jxbFooter = JxbNextRefreshFooter.init(frame: CGRect(x: 0, 0, self.frame.width, offset_footer_y))
         self.jxbFooter?.backgroundColor = self.backgroundColor
         self.jxbFooter!.jxbClosure = closure
         self.p_addObsever()
@@ -109,7 +85,7 @@ extension UIScrollView {
      当没有更多数据禁用上拉刷新 / disable the next refresh when it has no more data
      - parameter enbale: true or false
      */
-    public func setFooterEnable(_ enbale: Bool) -> Void {
+    public func setFooterEnable(enbale: Bool) -> Void {
         self.footerEnable = enbale
     }
     
@@ -118,18 +94,18 @@ extension UIScrollView {
      */
     public func stopPullRefresh() {
         let baseHeader: JxbRefreshBaseHeader? = self.p_getCurrentHeader()
-        DispatchQueue.main.async(execute: {[weak self, weak baseHeader] in
-            if baseHeader?.state == JxbRefreshPullState.refreshing {
-                baseHeader?.state = JxbRefreshPullState.none
+        DispatchQueue.main.async, {[weak self, weak baseHeader] in
+            if baseHeader?.state == JxbRefreshPullState.Refreshing {
+                baseHeader?.state = JxbRefreshPullState.None
                 baseHeader?.stopRefresh()
-                UIView.animate(withDuration: 0.35, animations: {
+                UIView.animateWithDuration(0.35, animations: {
                     self?.contentInset = UIEdgeInsetsMake((self?.contentInset.top)! - offset_heaer_y, 0, 0, 0)
                 })
             }
-            else if self?.jxbFooter?.state == JxbRefreshPullState.refreshing {
-                self?.jxbFooter?.state = JxbRefreshPullState.none
+            else if self?.jxbFooter?.state == JxbRefreshPullState.Refreshing {
+                self?.jxbFooter?.state = JxbRefreshPullState.None
                 self?.jxbFooter?.stopRefresh()
-                UIView.animate(withDuration: 0.35, animations: {
+                UIView.animateWithDuration(0.35, animations: {
                     self?.contentInset = UIEdgeInsetsMake((self?.contentInset.top)!, 0, 0, 0)
                 })
             }
@@ -137,7 +113,7 @@ extension UIScrollView {
     }
     
     //MARK: private function
-    fileprivate struct AssociatedKeys {
+    private struct AssociatedKeys {
         static var JxbHeadRefreshName = "JxbHeadRefreshName"
         static var JxbGifHeadRefreshName = "JxbGifHeadRefreshName"
         static var JxbFootRefreshName = "JxbFootRefreshName"
@@ -145,7 +121,7 @@ extension UIScrollView {
         static var JxbAlreadyAddObserverName = "JxbAlreadyAddObserverName"
     }
 
-    fileprivate var jxbHeader: JxbRefreshHeader? {
+    private var jxbHeader: JxbRefreshHeader? {
         get {
             return objc_getAssociatedObject(self, &AssociatedKeys.JxbHeadRefreshName) as? JxbRefreshHeader
         }
@@ -156,7 +132,7 @@ extension UIScrollView {
         }
     }
     
-    fileprivate var jxbGifHeader: JxbRefreshGifHeader? {
+    private var jxbGifHeader: JxbRefreshGifHeader? {
         get {
             return objc_getAssociatedObject(self, &AssociatedKeys.JxbGifHeadRefreshName) as? JxbRefreshGifHeader
         }
@@ -167,7 +143,7 @@ extension UIScrollView {
         }
     }
     
-    fileprivate var jxbFooter: JxbNextRefreshFooter? {
+    private var jxbFooter: JxbNextRefreshFooter? {
         get {
             return objc_getAssociatedObject(self, &AssociatedKeys.JxbFootRefreshName) as? JxbNextRefreshFooter
         }
@@ -178,7 +154,7 @@ extension UIScrollView {
         }
     }
     
-    fileprivate var footerEnable: Bool? {
+    private var footerEnable: Bool? {
         get {
             return objc_getAssociatedObject(self, &AssociatedKeys.JxbFootRefreshEnableName) as? Bool
         }
@@ -189,7 +165,7 @@ extension UIScrollView {
         }
     }
     
-    fileprivate var alreadayAddObserver: Bool? {
+    private var alreadayAddObserver: Bool? {
         get {
             return objc_getAssociatedObject(self, &AssociatedKeys.JxbAlreadyAddObserverName) as? Bool
         }
@@ -200,51 +176,51 @@ extension UIScrollView {
         }
     }
     
-    open override func willMove(toSuperview newSuperview: UIView?) {
+    public override func willMoveToSuperview(newSuperview: UIView?) {
         if newSuperview == nil {
             self.p_removeObsever()
         }
     }
 
-    fileprivate func p_addObsever() {
+    private func p_addObsever() {
         if self.alreadayAddObserver == nil || self.alreadayAddObserver == false {
             self.alreadayAddObserver = true
-            self.addObserver(self, forKeyPath: JxbContentOffset, options: .new, context: nil)
-            self.addObserver(self, forKeyPath: JxbPanstate, options: .new, context: nil)
+            self.addObserver(self, forKeyPath: JxbContentOffset, options: .New, context: nil)
+            self.addObserver(self, forKeyPath: JxbPanstate, options: .New, context: nil)
         }
     }
     
-    fileprivate func p_removeObsever() {
+    private func p_removeObsever() {
         if self.alreadayAddObserver == true {
             self.removeObserver(self, forKeyPath: JxbContentOffset)
             self.removeObserver(self, forKeyPath: JxbPanstate)
         }
     }
   
-    override open func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+    override public func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         let baseHeader: JxbRefreshBaseHeader? = self.p_getCurrentHeader()
         let baseFooter: JxbNextRefreshFooter? = self.jxbFooter
         if keyPath == JxbPanstate {
-            if baseHeader?.state.rawValue > JxbRefreshPullState.willRefresh.rawValue {
+            if baseHeader?.state.rawValue > JxbRefreshPullState.WillRefresh.rawValue {
                 return
             }
-            if baseFooter?.state.rawValue > JxbRefreshPullState.willRefresh.rawValue {
+            if baseFooter?.state.rawValue > JxbRefreshPullState.WillRefresh.rawValue {
                 return
             }
             switch self.panGestureRecognizer.state {
-            case .began:
-                baseHeader?.state = JxbRefreshPullState.pulling
+            case .Began:
+                baseHeader?.state = JxbRefreshPullState.Pulling
                 break
-            case .changed:
-                baseHeader?.state = JxbRefreshPullState.pulling
+            case .Changed:
+                baseHeader?.state = JxbRefreshPullState.Pulling
                 break
-            case .ended:
+            case .Ended:
                 print(self.contentOffset.y)
                 if -self.contentOffset.y > self.contentInset.top + offset_heaer_y + offset_morepull_y {
-                    baseHeader?.state = JxbRefreshPullState.willRefresh;
+                    baseHeader?.state = JxbRefreshPullState.WillRefresh;
                 }
                 if self.contentOffset.y + self.frame.height + offset_morenext_y >= self.contentSize.height {
-                    baseFooter?.state = JxbRefreshPullState.willRefresh;
+                    baseFooter?.state = JxbRefreshPullState.WillRefresh;
                 }
                 break
             default :
@@ -261,45 +237,45 @@ extension UIScrollView {
         
     }
    
-    fileprivate func p_adjustRefresh(_ baseHeader: JxbRefreshBaseHeader) {
-        if baseHeader.state != JxbRefreshPullState.refreshing {
+    private func p_adjustRefresh(baseHeader: JxbRefreshBaseHeader) {
+        if baseHeader.state != JxbRefreshPullState.Refreshing {
             let progress = (-self.contentInset.top - self.contentOffset.y - offset_morepull_y) / offset_heaer_y
             if (progress > 0) {
                 baseHeader.pulling(progress)
             }
         }
-        if baseHeader.state == JxbRefreshPullState.willRefresh {
-            baseHeader.state = JxbRefreshPullState.refreshing
+        if baseHeader.state == JxbRefreshPullState.WillRefresh {
+            baseHeader.state = JxbRefreshPullState.Refreshing
             if baseHeader.jxbClosure != nil {
                 print("Do JxbRefresh")
                 baseHeader.jxbClosure!()
             }
             baseHeader.startRefresh()
-            UIView.animate(withDuration: 0.35, animations: { [weak self] in
+            UIView.animateWithDuration(0.35, animations: { [weak self] in
                self?.contentInset = UIEdgeInsetsMake((self?.contentInset.top)! + offset_heaer_y, 0, 0, 0)
             }, completion: { [weak self] (b) in
-                self?.setContentOffset(CGPoint(x: 0, y: -(self?.contentInset.top)!), animated: true)
+                self?.setContentOffset(CGPointMake(0, -(self?.contentInset.top)!), animated: true)
             })
         }
     }
     
-    fileprivate func p_adjustFooterRefresh(_ baseFooter: JxbNextRefreshFooter) {
-        if baseFooter.state == JxbRefreshPullState.willRefresh {
-            baseFooter.state = JxbRefreshPullState.refreshing
+    private func p_adjustFooterRefresh(baseFooter: JxbNextRefreshFooter) {
+        if baseFooter.state == JxbRefreshPullState.WillRefresh {
+            baseFooter.state = JxbRefreshPullState.Refreshing
             if baseFooter.jxbClosure != nil {
                 print("Do Next JxbRefresh")
                 baseFooter.jxbClosure!()
             }
             baseFooter.startRefresh()
-            baseFooter.frame = CGRect(x: 0, y: self.contentSize.height, width: self.frame.width, height: offset_footer_y)
+            baseFooter.frame = CGRect(x: 0, self.contentSize.height, self.frame.width, offset_footer_y)
             self.addSubview(baseFooter)
-            UIView.animate(withDuration: 0.35, animations: { [weak self] in
+            UIView.animateWithDuration(0.35, animations: { [weak self] in
                 self?.contentInset = UIEdgeInsetsMake((self?.contentInset.top)!, 0, offset_footer_y, 0)
             })
         }
     }
     
-    fileprivate func p_getCurrentHeader() -> JxbRefreshBaseHeader? {
+    private func p_getCurrentHeader() -> JxbRefreshBaseHeader? {
         var baseHeader: JxbRefreshBaseHeader?
         if self.jxbHeader != nil {
             baseHeader = self.jxbHeader
