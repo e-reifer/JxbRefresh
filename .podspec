@@ -10,5 +10,5 @@ Pod::Spec.new do |s|
     s.ios.deployment_target = '11.0' # Set to iOS 11 for compatibility
     s.source_files     = 'JxbRefresh/JxbRefresh/*.*'
     s.requires_arc     = true
-  end
+end
   
