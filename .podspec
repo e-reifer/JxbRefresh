@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
     s.name             = 'JxbRefresh'
-    s.version          = '2.1'
+    s.version          = '2.2'
     s.license          = 'MIT'
     s.summary          = 'Give pull-to-refresh to any UIScrollView with 1 line of code. Written in Swift'
     s.homepage         = 'http://www.jxb.name'
